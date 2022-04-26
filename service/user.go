@@ -14,7 +14,7 @@ import (
 )
 
 type UserClientService interface {
-	GetUserByUserID(ctx context.Context, id int32) (*user.User, error)
+	GetUserByUserID(ctx context.Context, id int64) (*user.User, error)
 	CreateUser(ctx context.Context, user *user.User) error
 }
 
@@ -56,7 +56,7 @@ func (u *userClientServiceImpl) CreateUser(ctx context.Context, user *user.User)
 	return nil
 }
 
-func (u *userClientServiceImpl) GetUserByUserID(ctx context.Context, id int32) (*user.User, error) {
+func (u *userClientServiceImpl) GetUserByUserID(ctx context.Context, id int64) (*user.User, error) {
 	info, err := u.client.GetUserByUserID(id)
 	if err != nil {
 		return nil, err
@@ -76,9 +76,9 @@ func (u *userClientServiceImpl) GetUserByUserID(ctx context.Context, id int32) (
 		}
 	}
 	// 解析用户空间信息
-	work_space := []int32{}
-	history := []int32{}
-	subscribe := []int32{}
+	work_space := []int64{}
+	history := []int64{}
+	subscribe := []int64{}
 	for i := 0; i < len(spaces); i++ {
 		s := spaces[i]
 		switch s.Type {

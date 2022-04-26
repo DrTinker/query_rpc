@@ -14,3 +14,6 @@ const Max_Idle_Time = time.Second * 30
 const User_WorkSpace_Code = 0
 const User_History_Code = 1
 const User_Subscribe_Code = 2
+
+// db
+const Page_Size = 20

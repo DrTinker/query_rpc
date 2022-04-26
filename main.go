@@ -7,6 +7,7 @@ import (
 	"query_rpc/controller"
 	basic "query_rpc/grpc_gen/basic"
 	query "query_rpc/grpc_gen/query"
+	question "query_rpc/grpc_gen/question"
 	user "query_rpc/grpc_gen/user"
 	_ "query_rpc/start"
 	"strconv"
@@ -110,6 +111,151 @@ func (q queryService) GetQueryByID(ctx context.Context, req *query.GetQueryByIDR
 	return resp, nil
 }
 
+func (q queryService) GetQueryBatch(ctx context.Context, req *query.GetQueryBatchReq) (resp *query.GetQueryBatchResp, err error) {
+	c := controller.GetQueryClientController()
+	resp = new(query.GetQueryBatchResp)
+	querys, err := c.GetQueryBatch(ctx, req)
+	if err != nil {
+		resp.Resp = &basic.RespBody{
+			Code:    conf.RPC_ERROR_CODE,
+			RespMsg: "Failed!",
+		}
+		return resp, err
+	}
+	resp.Querys = querys
+	resp.Resp = &basic.RespBody{
+		Code:    conf.RPC_SUCCESS_CODE,
+		RespMsg: "Success!",
+	}
+	return resp, nil
+}
+
+// question服务
+type questionService struct{}
+
+var QuestionService = questionService{}
+
+func (q questionService) SetQuestionBatch(ctx context.Context, req *question.SetQuestionBatchReq) (resp *question.SetQuestionBatchResp, err error) {
+	c := controller.GetQuestionClientController()
+	resp = new(question.SetQuestionBatchResp)
+	err = c.SetQuestionBatch(ctx, req)
+	if err != nil {
+		resp.Resp = &basic.RespBody{
+			Code:    conf.RPC_ERROR_CODE,
+			RespMsg: "Failed!",
+		}
+		return resp, err
+	}
+	resp.Resp = &basic.RespBody{
+		Code:    conf.RPC_SUCCESS_CODE,
+		RespMsg: "Success!",
+	}
+	return resp, nil
+}
+
+func (q questionService) GetQuestionSingle(ctx context.Context, req *question.GetQuestionSingleReq) (resp *question.GetQuestionSingleResp, err error) {
+	c := controller.GetQuestionClientController()
+	resp = new(question.GetQuestionSingleResp)
+	question, err := c.GetQuestionSingle(ctx, req)
+	if err != nil {
+		resp.Resp = &basic.RespBody{
+			Code:    conf.RPC_ERROR_CODE,
+			RespMsg: "Failed!",
+		}
+		return resp, err
+	}
+	resp.Question = question
+	resp.Resp = &basic.RespBody{
+		Code:    conf.RPC_SUCCESS_CODE,
+		RespMsg: "Success!",
+	}
+	return resp, nil
+}
+
+func (q questionService) GetQuestionBatch(ctx context.Context, req *question.GetQuestionBatchReq) (resp *question.GetQuestionBatchResp, err error) {
+	c := controller.GetQuestionClientController()
+	resp = new(question.GetQuestionBatchResp)
+	questions, err := c.GetQuestionBatch(ctx, req)
+	if err != nil {
+		resp.Resp = &basic.RespBody{
+			Code:    conf.RPC_ERROR_CODE,
+			RespMsg: "Failed!",
+		}
+		return resp, err
+	}
+	resp.Questions = questions
+	resp.Resp = &basic.RespBody{
+		Code:    conf.RPC_SUCCESS_CODE,
+		RespMsg: "Success!",
+	}
+	return resp, nil
+}
+
+// result服务
+type resultService struct{}
+
+var ResultService = resultService{}
+
+func (r resultService) CommitQuery(ctx context.Context, req *question.CommitQueryReq) (resp *question.CommitQueryResp, err error) {
+	c := controller.GetResultClientController()
+	resp = new(question.CommitQueryResp)
+	err = c.CommitQuery(ctx, req)
+	if err != nil {
+		resp.Resp = &basic.RespBody{
+			Code:    conf.RPC_ERROR_CODE,
+			RespMsg: "Failed!",
+		}
+		return resp, err
+	}
+	resp.Resp = &basic.RespBody{
+		Code:    conf.RPC_SUCCESS_CODE,
+		RespMsg: "Success!",
+	}
+	return resp, nil
+}
+
+func (r resultService) GetOptionResultByQuestion(ctx context.Context, req *question.GetOptionResultByQuestionReq) (resp *question.GetOptionResultByQuestionResp, err error) {
+	c := controller.GetResultClientController()
+	resp = new(question.GetOptionResultByQuestionResp)
+	data, err := c.GetOptionResultByQuestion(ctx, req)
+	if err != nil {
+		resp.Resp = &basic.RespBody{
+			Code:    conf.RPC_ERROR_CODE,
+			RespMsg: "Failed!",
+		}
+		return resp, err
+	}
+	resp.Data = data
+	resp.Resp = &basic.RespBody{
+		Code:    conf.RPC_SUCCESS_CODE,
+		RespMsg: "Success!",
+	}
+	return resp, nil
+}
+
+func (r resultService) GetBlankResultByQuestion(ctx context.Context, req *question.GetBlankResultByQuestionReq) (resp *question.GetBlankResultByQuestionResp, err error) {
+	c := controller.GetResultClientController()
+	resp = new(question.GetBlankResultByQuestionResp)
+	data, err := c.GetBlankResultByQuestion(ctx, req)
+	if err != nil {
+		resp.Resp = &basic.RespBody{
+			Code:    conf.RPC_ERROR_CODE,
+			RespMsg: "Failed!",
+		}
+		return resp, err
+	}
+	resp.Result = data
+	resp.Resp = &basic.RespBody{
+		Code:    conf.RPC_SUCCESS_CODE,
+		RespMsg: "Success!",
+	}
+	return resp, nil
+}
+
+func (r resultService) GetResultByQuery(ctx context.Context, req *question.GetResultByQueryReq) (resp *question.GetResultByQueryResp, err error) {
+	return nil, nil
+}
+
 func main() {
 	cfg, err := client.GetConfigClient().GetRPCConfig()
 	if err != nil {
@@ -124,8 +270,11 @@ func main() {
 	// 实例化grpc Server
 	s := grpc.NewServer()
 
+	// 服务注册
 	user.RegisterUserServiceServer(s, UserService)
 	query.RegisterQueryServiceServer(s, QueryService)
+	question.RegisterQuestionServiceServer(s, QuestionService)
+	question.RegisterResultServiceServer(s, ResultService)
 
 	fmt.Println("Listen on " + address)
 	s.Serve(listen)

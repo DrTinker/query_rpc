@@ -9,8 +9,10 @@ import (
 )
 
 type QueryClientService interface {
-	GetQueryByID(ctx context.Context, id int32) (*query.Query, error)
-	CreateQuery(ctx context.Context, query *query.Query, id int32) error
+	GetQueryByID(ctx context.Context, id int64) (*query.Query, error)
+	CreateQuery(ctx context.Context, query *query.Query, id int64) error
+	// 根据用户id批量获取，t为问卷类型
+	GetQueryBatch(ctx context.Context, id int64, t int32) ([]*query.Query, error)
 }
 
 type queryClientServiceImpl struct {
@@ -23,11 +25,38 @@ func GetQueryClientService() QueryClientService {
 	}
 }
 
-func (q *queryClientServiceImpl) GetQueryByID(ctx context.Context, id int32) (*query.Query, error) {
+func (q *queryClientServiceImpl) GetQueryByID(ctx context.Context, id int64) (*query.Query, error) {
 	info, err := q.client.GetQueryByID(id)
 	if err != nil {
 		return nil, err
 	}
+	query := modelToRPC(info)
+	return query, nil
+}
+
+func (q *queryClientServiceImpl) CreateQuery(ctx context.Context, query *query.Query, id int64) error {
+	info := rpcToModel(query)
+	err := q.client.CreateQuery(info, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (q *queryClientServiceImpl) GetQueryBatch(ctx context.Context, id int64, t int32) ([]*query.Query, error) {
+	infos, err := q.client.GetQueryBatch(id, t)
+	if err != nil {
+		return nil, err
+	}
+	size := len(infos)
+	querys := make([]*query.Query, size)
+	for i := 0; i < size; i++ {
+		querys[i] = modelToRPC(infos[i])
+	}
+	return querys, nil
+}
+
+func modelToRPC(info *models.Query) *query.Query {
 	query := &query.Query{}
 	query.QueryId = info.Query_ID
 	query.QueryName = info.Query_Name
@@ -39,10 +68,12 @@ func (q *queryClientServiceImpl) GetQueryByID(ctx context.Context, id int32) (*q
 	query.Background = info.Background
 	query.Creator = info.Creator
 	query.CreateTime = info.Create_time.Unix()
-	return query, nil
+	query.Number = info.Count
+
+	return query
 }
 
-func (q *queryClientServiceImpl) CreateQuery(ctx context.Context, query *query.Query, id int32) error {
+func rpcToModel(query *query.Query) *models.Query {
 	info := &models.Query{}
 	info.Query_ID = query.QueryId
 	info.Query_Name = query.QueryName
@@ -54,9 +85,6 @@ func (q *queryClientServiceImpl) CreateQuery(ctx context.Context, query *query.Q
 	info.Background = query.Background
 	info.Creator = query.Creator
 	info.Create_time = time.Unix(query.CreateTime, 0)
-	err := q.client.CreateQuery(info, id)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return info
 }

@@ -12,6 +12,7 @@ import (
 type QueryClientController interface {
 	GetQueryByID(ctx context.Context, req *query.GetQueryByIDReq) (*query.Query, error)
 	CreateQuery(ctx context.Context, req *query.CreateQueryReq) error
+	GetQueryBatch(ctx context.Context, req *query.GetQueryBatchReq) ([]*query.Query, error)
 }
 
 type queryClientControllerImpl struct {
@@ -46,4 +47,22 @@ func (q *queryClientControllerImpl) CreateQuery(ctx context.Context, req *query.
 		return err
 	}
 	return nil
+}
+
+func (q *queryClientControllerImpl) GetQueryBatch(ctx context.Context, req *query.GetQueryBatchReq) ([]*query.Query, error) {
+	id := req.GetUserId()
+	if id <= 0 {
+		logrus.Errorln("[QueryClientController] GetQueryBatch id invaild")
+		return nil, errors.Wrap(errors.New("id invaild"), "[QueryClientController] GetQueryBatch id err: ")
+	}
+	t := req.GetQueryType()
+	if t < 0 {
+		logrus.Errorln("[QueryClientController] GetQueryBatch type invaild")
+		return nil, errors.Wrap(errors.New("type invaild"), "[QueryClientController] GetQueryBatch type err: ")
+	}
+	querys, err := q.service.GetQueryBatch(ctx, id, t)
+	if err != nil {
+		return nil, err
+	}
+	return querys, nil
 }

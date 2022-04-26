@@ -10,3 +10,6 @@ var DBUpdateError = errors.New("DB update error")
 
 // 数据处理错误
 var JsonError = errors.New("JSON parse error")
+
+// 参数校验
+var ParamError = errors.New("Param check error")
